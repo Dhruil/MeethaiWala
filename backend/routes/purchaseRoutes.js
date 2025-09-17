@@ -3,6 +3,6 @@ import { getUserPurchases } from "../controllers/purchaseController.js";
 
 const router = express.Router();
 
-router.get("/", getUserPurchases);
+router.get("/:userId", getUserPurchases);
 
 export default router;
