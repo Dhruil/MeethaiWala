@@ -13,32 +13,32 @@ import { signToken } from "../utils/jwt.js";
  * }
  */
 async function register(req, res) {
-  const { role, name, email, password, shop_name} = req.body;
+  const { role, name, email, password, shop_name } = req.body;
   if (!role || !email || !password || !name) {
     return res.status(400).json({ message: "role, name, email and password are required" });
   }
 
   try {
     if (role === "owner") {
-  const [existing] = await db.query("SELECT id FROM shop_owners WHERE email = ?", [email]);
-  if (existing.length) return res.status(409).json({ message: "Owner email already registered" });
+      const [existing] = await db.query("SELECT id FROM shop_owners WHERE email = ?", [email]);
+      if (existing.length) return res.status(409).json({ message: "Owner email already registered" });
 
-  const [result] = await db.query(
-    "INSERT INTO shop_owners (owner_name, email, password, shop_name) VALUES (?, ?, ?, ?)",
-    [name, email, password, shop_name || ""]
-  );
-    console.log(result);
-  return res.status(201).json({ message: "Owner registered", owner_id: result.insertId });
-} else {
-  const [existing] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
-  if (existing.length) return res.status(409).json({ message: "User email already registered" });
+      const [result] = await db.query(
+        "INSERT INTO shop_owners (owner_name, email, password, shop_name) VALUES (?, ?, ?, ?)",
+        [name, email, password, shop_name || ""]
+      );
+      console.log(result);
+      return res.status(201).json({ message: "Owner registered", owner_id: result.insertId });
+    } else {
+      const [existing] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
+      if (existing.length) return res.status(409).json({ message: "User email already registered" });
 
-  const [result] = await db.query(
-    "INSERT INTO users (user_name, email, password) VALUES (?, ?, ?)",
-    [name, email, password]
-  );
-  return res.status(201).json({ message: "User registered", user_id: result.insertId });
-}
+      const [result] = await db.query(
+        "INSERT INTO users (user_name, email, password) VALUES (?, ?, ?)",
+        [name, email, password]
+      );
+      return res.status(201).json({ message: "User registered", user_id: result.insertId });
+    }
 
   } catch (err) {
     console.error("Register error:", err);
@@ -65,16 +65,16 @@ async function login(req, res) {
       const [rows] = await db.query("SELECT id, user_name, email, password FROM users WHERE email = ?", [email]);
       if (rows.length) {
         const user = rows[0];
-        if (!password === user.password) return res.status(401).json({ message: "Invalid credentials" });
+        if (password !== user.password) return res.status(401).json({ message: "Invalid credentials" });
 
         const token = signToken({ id: user.id, role: "user", name: user.user_name, email: user.email, type: "user" });
         return res.json({ token, user: { id: user.id, role: "user", name: user.user_name, email: user.email } });
       }
-    }else {
+    } else {
       const [rows] = await db.query("SELECT id, owner_name, email, password, shop_name FROM shop_owners WHERE email = ?", [email]);
       if (rows.length) {
         const owner = rows[0];
-        if (!password === owner.password) return res.status(401).json({ message: "Invalid credentials" });
+        if (password !== owner.password) return res.status(401).json({ message: "Invalid credentials" });
 
         const token = signToken({ id: owner.id, role: "owner", name: owner.owner_name, email: owner.email, shop_name: owner.shop_name, type: "owner" });
         return res.json({ token, user: { id: owner.id, role: "owner", name: owner.owner_name, email: owner.email, shop_name: owner.shop_name } });
