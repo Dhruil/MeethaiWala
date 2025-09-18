@@ -137,7 +137,7 @@ async function purchaseSweet(req, res) {
 async function restockSweet(req, res) {
   try {
     if (req.user.role !== "owner") {
-      return res.status(403).json({ message: "Only owners/admins can restock sweets" });
+      return res.status(403).json({ message: "Only Owners can restock sweets" });
     }
     const { id } = req.params;
     const { quantity } = req.body;
@@ -151,7 +151,8 @@ async function restockSweet(req, res) {
     }
     const sweet = sweetRows[0];
     await db.query("UPDATE sweets SET quantity=? WHERE id=?", [sweet.quantity + quantity, id]);
-    res.json({ message: "Sweet restocked", sweet_id: id, new_quantity: sweet.quantity + quantity });
+    res.json({ message: "Sweet restocked", sweet_id: id, new_quantity: sweet.quantity + quantity, added_quantity: quantity
+    });
   } catch (err) {
     console.error("Restock error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
