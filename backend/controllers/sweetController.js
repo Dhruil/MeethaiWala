@@ -82,7 +82,7 @@ async function deleteSweet(req, res) {
 async function addSweet(req, res) {
   try {
     if (req.user.role !== "owner") {
-      return res.status(403).json({ message: "Only owners/admins can add sweets" });
+      return res.status(403).json({ message: "Only owners can add sweets" });
     }
 
     const { name, category, price, quantity, description, image_url } = req.body;
@@ -101,4 +101,61 @@ async function addSweet(req, res) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 }
-export { searchSweets, updateSweet, deleteSweet, addSweet };
+
+async function purchaseSweet(req, res) {
+  try {
+    const { id } = req.params;
+    const { quantity } = req.body;
+
+    if (!quantity || quantity <= 0) {
+      return res.status(400).json({ message: "Quantity must be a positive number" });
+    }
+
+    const [sweetRows] = await db.query("SELECT * FROM sweets WHERE id=?", [id]);
+    if (sweetRows.length === 0) {
+      return res.status(404).json({ message: "Sweet not found" });
+    }
+
+    const sweet = sweetRows[0];
+    if (sweet.quantity < quantity) {
+      return res.status(400).json({ message: "Insufficient stock" });
+    }
+
+    const total_price = sweet.price * quantity;
+    const query = "INSERT INTO purchases (user_id, sweet_id, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?)";
+    await db.query(query, [req.user.id, id, quantity, sweet.price, total_price]);
+    const newQuantity = sweet.quantity - quantity;
+    await db.query("UPDATE sweets SET quantity=? WHERE id=?", [newQuantity, id]);
+
+    res.json({ message: "Purchase successful", sweet_id: id, quantity, total_price });
+  } catch (err) {
+    console.error("Purchase error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+}
+
+async function restockSweet(req, res) {
+  try {
+    if (req.user.role !== "owner") {
+      return res.status(403).json({ message: "Only owners/admins can restock sweets" });
+    }
+    const { id } = req.params;
+    const { quantity } = req.body;
+
+    if (!quantity || quantity <= 0) {
+      return res.status(400).json({ message: "Quantity must be a positive number" });
+    }
+    const [sweetRows] = await db.query("SELECT * FROM sweets WHERE id=?", [id]);
+    if (sweetRows.length === 0) {
+      return res.status(404).json({ message: "Sweet not found" });
+    }
+    const sweet = sweetRows[0];
+    await db.query("UPDATE sweets SET quantity=? WHERE id=?", [sweet.quantity + quantity, id]);
+    res.json({ message: "Sweet restocked", sweet_id: id, new_quantity: sweet.quantity + quantity });
+  } catch (err) {
+    console.error("Restock error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+}
+
+export { searchSweets, updateSweet, deleteSweet, addSweet, getAllSweets, purchaseSweet, restockSweet };
