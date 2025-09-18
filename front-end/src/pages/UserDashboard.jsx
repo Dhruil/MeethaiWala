@@ -1,18 +1,74 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Search, Filter, X } from "lucide-react";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 export default function UserDashboard({ user }) {
   const [sweets, setSweets] = useState([]);
+  const [filteredSweets, setFilteredSweets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     axios
       .get(`${API_URL}/sweets`)
-      .then((res) => setSweets(res.data))
+      .then((res) => {
+        setSweets(res.data);
+        setFilteredSweets(res.data);
+        // Extract unique categories
+        const uniqueCategories = [
+          ...new Set(res.data.map((sweet) => sweet.category)),
+        ];
+        setCategories(uniqueCategories);
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, []);
+
+  // Filter sweets based on search, category, and price
+  useEffect(() => {
+    let filtered = sweets;
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter((sweet) =>
+        sweet.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Category filter
+    if (selectedCategory) {
+      filtered = filtered.filter(
+        (sweet) => sweet.category === selectedCategory
+      );
+    }
+
+    // Price range filter
+    if (priceRange.min !== "") {
+      filtered = filtered.filter(
+        (sweet) => sweet.price >= parseInt(priceRange.min)
+      );
+    }
+    if (priceRange.max !== "") {
+      filtered = filtered.filter(
+        (sweet) => sweet.price <= parseInt(priceRange.max)
+      );
+    }
+
+    setFilteredSweets(filtered);
+  }, [sweets, searchTerm, selectedCategory, priceRange]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedCategory("");
+    setPriceRange({ min: "", max: "" });
+  };
+
+  const hasActiveFilters =
+    searchTerm || selectedCategory || priceRange.min || priceRange.max;
 
   return (
     <div className="min-h-screen mt-10 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -26,8 +82,122 @@ export default function UserDashboard({ user }) {
             Discover Our Sweet Collection
           </h2>
 
+          {/* Search and Filter Section */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <div className="flex flex-col lg:flex-row gap-4 items-center">
+              {/* Search Bar */}
+              <div className="relative flex-1 w-full lg:w-auto">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <input
+                  type="text"
+                  placeholder="Search sweets..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Category Filter */}
+              <div className="relative w-full lg:w-48">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
+                >
+                  <option value="">All Categories</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+                <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 pointer-events-none" />
+              </div>
+
+              {/* Price Range */}
+              <div className="flex gap-2 w-full lg:w-auto">
+                <input
+                  type="number"
+                  placeholder="Min ₹"
+                  value={priceRange.min}
+                  onChange={(e) =>
+                    setPriceRange((prev) => ({ ...prev, min: e.target.value }))
+                  }
+                  className="w-24 px-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <input
+                  type="number"
+                  placeholder="Max ₹"
+                  value={priceRange.max}
+                  onChange={(e) =>
+                    setPriceRange((prev) => ({ ...prev, max: e.target.value }))
+                  }
+                  className="w-24 px-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Active Filters Display */}
+            {hasActiveFilters && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {searchTerm && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">
+                    Search: "{searchTerm}"
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="hover:bg-indigo-200 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+                {selectedCategory && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+                    Category: {selectedCategory}
+                    <button
+                      onClick={() => setSelectedCategory("")}
+                      className="hover:bg-purple-200 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+                {(priceRange.min || priceRange.max) && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                    Price: ₹{priceRange.min || 0} - ₹{priceRange.max || "∞"}
+                    <button
+                      onClick={() => setPriceRange({ min: "", max: "" })}
+                      className="hover:bg-green-200 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+              <span className="ml-3 text-lg text-gray-600">
+                Loading delicious sweets...
+              </span>
+            </div>
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-              {sweets.map((sweet) => (
+              {filteredSweets.map((sweet) => (
                 <div
                   key={sweet.id}
                   className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden group"
@@ -62,6 +232,7 @@ export default function UserDashboard({ user }) {
                 </div>
               ))}
             </div>
+          )}
 
           {!loading && sweets.length === 0 && (
             <div className="text-center py-20">
