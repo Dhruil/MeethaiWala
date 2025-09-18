@@ -15,7 +15,8 @@ describe("Simple API tests", () => {
   });
 
   test("GET /api/purchases/:userId returns status 200 and data", async () => {
-    const response = await request(app).get("/api/purchases");
+    const testUserId = "1";
+    const response = await request(app).get(`/api/purchases/${testUserId}`);
     expect(response.status).toBe(200);
     expect(response.body).toBeDefined();
   });
