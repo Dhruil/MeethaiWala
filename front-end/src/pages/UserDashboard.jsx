@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { ShoppingCart, Search, Filter, X } from "lucide-react";
+import { BadgeIndianRupee, Search, Filter, X } from "lucide-react";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-export default function UserDashboard({ user }) {
+export default function UserDashboard({ user , token}) {
   const [sweets, setSweets] = useState([]);
   const [filteredSweets, setFilteredSweets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,6 +11,7 @@ export default function UserDashboard({ user }) {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [categories, setCategories] = useState([]);
+  const [purchase, setPurchase] = useState(false);
 
   useEffect(() => {
     axios
@@ -26,7 +27,7 @@ export default function UserDashboard({ user }) {
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [purchase]);
 
   // Filter sweets based on search, category, and price
   useEffect(() => {
@@ -69,6 +70,30 @@ export default function UserDashboard({ user }) {
 
   const hasActiveFilters =
     searchTerm || selectedCategory || priceRange.min || priceRange.max;
+
+  const handlePurchase = async (sweetId) => {
+    const qty = prompt("Enter quantity to purchase:");
+    if (!qty || isNaN(qty) || parseInt(qty) <= 0) {
+      alert("Invalid quantity!");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${API_URL}/sweets/${sweetId}/purchase`,
+        { quantity: parseInt(qty) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert(`✅ ${res.data.message}\nTotal Price: ₹${res.data.total_price}`);
+
+      // refresh sweets stock after purchase
+      setPurchase(!purchase);
+    } catch (err) {
+      console.error("Purchase failed:", err);
+      alert(err.response?.data?.message || "Purchase failed");
+    }
+  };
 
   return (
     <div className="min-h-screen mt-10 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -200,7 +225,12 @@ export default function UserDashboard({ user }) {
               {filteredSweets.map((sweet) => (
                 <div
                   key={sweet.id}
-                  className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden group"
+                  className={`bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden group
+                     ${
+                          sweet.quantity === 0
+                            ? "opacity-50 cursor-not-allowed"
+                            : " hover:scale-105"
+                        }`}
                 >
                   <div className="relative">
                     <img
@@ -224,9 +254,19 @@ export default function UserDashboard({ user }) {
                       Stock: {sweet.quantity} pieces
                     </p>
 
-                    <button className="w-full bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-3 px-4 rounded-xl hover:from-indigo-700 hover:to-purple-800 transition-all duration-300 transform hover:scale-105 font-semibold shadow-lg flex items-center justify-center gap-2">
-                      Add to Cart
-                      <ShoppingCart />
+                    <button
+                      className={`w-full py-3 px-4 rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-300 transform bg-gradient-to-r from-indigo-600 to-purple-700 text-white hover:from-indigo-700 hover:to-purple-800
+                        ${
+                          sweet.quantity === 0
+                            ? "opacity-50 cursor-not-allowed"
+                            : " hover:scale-105"
+                        }
+                      `}
+                      disabled={sweet.quantity === 0}
+                      onClick={() => handlePurchase(sweet.id)}
+                    >
+                      Purchase
+                      <BadgeIndianRupee />
                     </button>
                   </div>
                 </div>
