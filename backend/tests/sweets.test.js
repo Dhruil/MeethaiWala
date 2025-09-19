@@ -120,29 +120,6 @@ describe("Sweets API", () => {
     expect(res.body.message).toMatch(/not found/);
   });
 
-  test("DELETE /api/sweets/:id should delete sweet (owner only)", async () => {
-    const res = await request(app)
-      .delete(`/api/sweets/${sweetId}`)
-      .set("Authorization", `Bearer ${ownerToken}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toBe("Sweet deleted");
-  });
-
-  test("DELETE /api/sweets/:id should return error if sweet not found", async () => {
-    const res = await request(app)
-      .delete("/api/sweets/999999")
-      .set("Authorization", `Bearer ${ownerToken}`);
-    expect(res.statusCode).toBe(404);
-    expect(res.body.message).toMatch(/not found/);
-  });
-
-  test("GET /api/sweets/:id after delete should return not found", async () => {
-    const res = await request(app).get("/api/sweets");
-    const exists = res.body.find(s => s.id === sweetId);
-    expect(exists).toBeUndefined();
-  });
-
   test("POST /api/sweets/:id/purchase should return error without token", async () => {
     const res = await request(app)
       .post(`/api/sweets/${sweetId}/purchase`)
@@ -191,6 +168,29 @@ describe("Sweets API", () => {
       .send({ quantity: 10 });
     expect(res.statusCode).toBe(404);
     expect(res.body.message).toMatch(/not found/);
+  });
+
+  test("DELETE /api/sweets/:id should delete sweet (owner only)", async () => {
+    const res = await request(app)
+      .delete(`/api/sweets/${sweetId}`)
+      .set("Authorization", `Bearer ${ownerToken}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe("Sweet deleted");
+  });
+
+  test("DELETE /api/sweets/:id should return error if sweet not found", async () => {
+    const res = await request(app)
+      .delete("/api/sweets/999999")
+      .set("Authorization", `Bearer ${ownerToken}`);
+    expect(res.statusCode).toBe(404);
+    expect(res.body.message).toMatch(/not found/);
+  });
+
+  test("GET /api/sweets/:id after delete should return not found", async () => {
+    const res = await request(app).get("/api/sweets");
+    const exists = res.body.find(s => s.id === sweetId);
+    expect(exists).toBeUndefined();
   });
 
 
