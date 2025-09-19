@@ -40,6 +40,9 @@ afterAll(async () => {
   if (ownerId) {
     await db.query("DELETE FROM shop_owners WHERE id = ?", [ownerId]);
   }
+  if(userId){
+    await db.query("DELETE FROM users WHERE id = ?", [userId]);
+  }
   await db.end();
 });
 
@@ -137,6 +140,7 @@ describe("Sweets API", () => {
   });
 
   test("POST /api/sweets/:id/purchase should return error if sweet not found", async () => {
+    console.log(userToken)
     const res = await request(app)
       .post("/api/sweets/999999/purchase")
       .set("Authorization", `Bearer ${userToken}`)
