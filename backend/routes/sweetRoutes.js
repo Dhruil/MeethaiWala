@@ -1,10 +1,11 @@
 import express from "express";
-import { getAllSweets, addSweet, searchSweets, updateSweet, deleteSweet, purchaseSweet, restockSweet} from "../controllers/sweetController.js";
+import { getAllSweets, getSweetsByOwnerId,addSweet, searchSweets, updateSweet, deleteSweet, purchaseSweet, restockSweet} from "../controllers/sweetController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 router.get("/", getAllSweets);
+router.get("/:ownerId", authMiddleware, getSweetsByOwnerId);
 router.get("/search", searchSweets);
 // Protected routes
 router.post("/", authMiddleware, addSweet);

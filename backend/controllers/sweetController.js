@@ -10,6 +10,17 @@ const getAllSweets = async (req, res) => {
   }
 };
 
+//Get by owner id
+const getSweetsByOwnerId = async (req, res) => {
+  try {
+    const ownerId = req.params.ownerId;
+    const [rows] = await db.query("SELECT * FROM sweets WHERE owner_id = ?", [ownerId]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+}
+
 // Search sweets
 const searchSweets = async (req, res) => {
   try {
@@ -159,4 +170,4 @@ async function restockSweet(req, res) {
   }
 }
 
-export { searchSweets, updateSweet, deleteSweet, addSweet, getAllSweets, purchaseSweet, restockSweet };
+export { searchSweets, updateSweet, deleteSweet, addSweet, getAllSweets, purchaseSweet, restockSweet ,getSweetsByOwnerId};
