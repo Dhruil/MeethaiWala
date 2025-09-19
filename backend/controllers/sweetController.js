@@ -13,7 +13,7 @@ const getAllSweets = async (req, res) => {
 //Get by owner id
 const getSweetsByOwnerId = async (req, res) => {
   try {
-    const ownerId = req.params.ownerId;
+    const ownerId =  req.user.id;
     const [rows] = await db.query("SELECT * FROM sweets WHERE owner_id = ?", [ownerId]);
     res.json(rows);
   } catch (err) {

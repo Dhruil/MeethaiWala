@@ -5,7 +5,7 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 router.get("/", getAllSweets);
-router.get("/:ownerId", authMiddleware, getSweetsByOwnerId);
+router.get("/owner", authMiddleware, getSweetsByOwnerId);
 router.get("/search", searchSweets);
 // Protected routes
 router.post("/", authMiddleware, addSweet);
