@@ -28,7 +28,8 @@ async function register(req, res) {
         [name, email, password, shop_name || ""]
       );
       console.log(result);
-      return res.status(201).json({ message: "Owner registered", owner_id: result.insertId });
+      const token = signToken({ id: result.insertId, role: "owner", name, email, shop_name, type: "owner" });
+      return res.status(201).json({ message: "Owner registered", owner_id: result.insertId, token, user: { id: result.insertId, role: "owner", name, email, shop_name } });
     } else {
       const [existing] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
       if (existing.length) return res.status(409).json({ message: "User email already registered" });
@@ -37,7 +38,8 @@ async function register(req, res) {
         "INSERT INTO users (user_name, email, password) VALUES (?, ?, ?)",
         [name, email, password]
       );
-      return res.status(201).json({ message: "User registered", user_id: result.insertId });
+      const token = signToken({ id: result.insertId, role: "user", name, email, type: "user" });
+      return res.status(201).json({ message: "User registered", user_id: result.insertId, token });
     }
 
   } catch (err) {
