@@ -21,7 +21,7 @@ beforeAll(async () => {
   ownerId = registerOwner.body.owner_id;
   ownerToken = registerOwner.body.token;
 
-  const   registerUser= await request(app).post("/api/auth/register").send({
+  const registerUser = await request(app).post("/api/auth/register").send({
     role: "user",
     name: "Test User",
     email: "testuser@example.com",
@@ -141,6 +141,56 @@ describe("Sweets API", () => {
     const res = await request(app).get("/api/sweets");
     const exists = res.body.find(s => s.id === sweetId);
     expect(exists).toBeUndefined();
+  });
+
+  test("POST /api/sweets/:id/purchase should return error without token", async () => {
+    const res = await request(app)
+      .post(`/api/sweets/${sweetId}/purchase`)
+      .send({ quantity: 5 });
+    expect(res.statusCode).toBe(401);
+  });
+
+  test("POST /api/sweets/:id/purchase should return error for invalid quantity", async () => {
+    const res = await request(app)
+      .post(`/api/sweets/${sweetId}/purchase`)
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({ quantity: 0 });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toMatch(/positive number/);
+  });
+
+  test("POST /api/sweets/:id/purchase should return error if sweet not found", async () => {
+    const res = await request(app)
+      .post("/api/sweets/999999/purchase")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({ quantity: 1 });
+    expect(res.statusCode).toBe(404);
+    expect(res.body.message).toMatch(/not found/);
+  });
+
+  test("POST /api/sweets/:id/restock should return error without token", async () => {
+    const res = await request(app)
+      .post(`/api/sweets/${sweetId}/restock`)
+      .send({ quantity: 10 });
+    expect(res.statusCode).toBe(401);
+  });
+
+  test("POST /api/sweets/:id/restock should return error for invalid quantity", async () => {
+    const res = await request(app)
+      .post(`/api/sweets/${sweetId}/restock`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ quantity: 0 });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toMatch(/positive number/);
+  });
+
+  test("POST /api/sweets/:id/restock should return error if sweet not found", async () => {
+    const res = await request(app)
+      .post("/api/sweets/999999/restock")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ quantity: 10 });
+    expect(res.statusCode).toBe(404);
+    expect(res.body.message).toMatch(/not found/);
   });
 
 
