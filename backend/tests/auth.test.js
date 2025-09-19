@@ -107,4 +107,51 @@ describe("Auth API", () => {
     expect(res.statusCode).toBe(409);
     expect(res.body.message).toMatch(/already registered/);
   });
+
+  test("Reject registration with missing fields", async () => {
+  const res = await request(app)
+    .post("/api/auth/register")
+    .send({ role: "user", email: "", password: "" });
+
+  expect(res.statusCode).toBe(400);
+});
+
+test("Reject duplicate owner registration", async () => {
+  const res = await request(app)
+    .post("/api/auth/register")
+    .send({
+      role: "owner",
+      name: "DuplicateOwner",
+      email: "owner@example.com",
+      password: "ownerpass",
+      shop_name: "Owner Shop"
+    });
+
+  expect(res.statusCode).toBe(409);
+});
+
+test("Reject login with missing fields", async () => {
+  const res = await request(app)
+    .post("/api/auth/login")
+    .send({ email: "" }); // no password
+
+  expect(res.statusCode).toBe(400);
+});
+
+test("Reject login for non-existing user", async () => {
+  const res = await request(app)
+    .post("/api/auth/login")
+    .send({ email: "nouser@example.com", password: "test123", type: "user" });
+
+  expect(res.statusCode).toBe(404);
+});
+
+test("Reject login for non-existing owner", async () => {
+  const res = await request(app)
+    .post("/api/auth/login")
+    .send({ email: "noowner@example.com", password: "test123", type: "owner" });
+
+  expect(res.statusCode).toBe(404);
+});
+
 });
