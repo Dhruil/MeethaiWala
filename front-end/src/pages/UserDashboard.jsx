@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { BadgeIndianRupee, Search, Filter, X ,ImageOff} from "lucide-react";
+import { BadgeIndianRupee, Search, Filter, X, ImageOff } from "lucide-react";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-export default function UserDashboard({ user , token}) {
+export default function UserDashboard({ user, token }) {
   const [sweets, setSweets] = useState([]);
   const [filteredSweets, setFilteredSweets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -227,18 +227,17 @@ export default function UserDashboard({ user , token}) {
                   key={sweet.id}
                   className={`bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden group
                      ${
-                          sweet.quantity === 0
-                            ? "opacity-50 cursor-not-allowed"
-                            : " hover:scale-105"
-                        }`}
+                       sweet.quantity === 0
+                         ? "opacity-50 cursor-not-allowed"
+                         : " hover:scale-105"
+                     }`}
                 >
                   <div className="relative">
                     <img
-                      src={sweet.image_url}
+                      src={sweet.image_url || ""}
                       alt={sweet.name}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <ImageOff className="w-8 h-8 text-gray-400" />
+                    />
                     <div className="absolute top-3 right-3 bg-indigo-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
                       ₹{sweet.price}
                     </div>

@@ -1,5 +1,10 @@
 # 🍬 MethaiWala
 
+## 🌐 Live Demo
+
+**🚀 Frontend:** [https://meethaiwala.onrender.com/](https://meethaiwala.onrender.com/)  
+**🔧 Backend API:** [https://meethai-wala.onrender.com](https://meethai-wala.onrender.com)
+
 ## 📌 Project Description
 
 **MethaiWala** is a full-stack **Sweet Shop Management System** built with **React (frontend)**, **Node.js + Express (backend)**, and **MySQL (database)**.
