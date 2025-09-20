@@ -136,4 +136,11 @@ Detailed coverage reports are available in `backend/coverage/lcov-report/index.h
 ![Login Page](front-end/public/loginpage.png)
 
 ### Dashboard
-![Dashboard](front-end/public/userDashboard.png)
+# User Dashboard
+![User Dashboard](front-end/public/userDashboard.png)
+![User Dashboard](front-end/public/userDashboard1.png)
+
+# Owner Dashboard
+![Owner Dashboard](front-end/public/ownerDashboard.png)
+
+
