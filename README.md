@@ -60,8 +60,6 @@ Before running the project, ensure you have the following installed:
    DB_PASSWORD=your_mysql_password
    DB_NAME=sweet_shop
    JWT_SECRET=your_jwt_secret_key
-   SMS_API_KEY=your_sms_api_key (for TextLocal)
-   SMS_SENDER=your_sender_id
    ```
 
 4. Set up the database:
