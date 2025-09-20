@@ -40,7 +40,7 @@ afterAll(async () => {
   if (ownerId) {
     await db.query("DELETE FROM shop_owners WHERE id = ?", [ownerId]);
   }
-  if(userId){
+  if (userId) {
     await db.query("DELETE FROM users WHERE id = ?", [userId]);
   }
   await db.end();
@@ -54,11 +54,39 @@ describe("Sweets API", () => {
     expect(res.body[0].name).toBe("Kaju Katli");
   });
 
+  test("GET /api/sweets/owner should return sweets for authenticated owner", async () => {
+    const res = await request(app)
+      .get("/api/sweets/owner")
+      .set("Authorization", `Bearer ${ownerToken}`);
+    expect(res.statusCode).toBe(200);
+  });
+
+  test("GET /api/sweets/owner should return error without token", async () => {
+    const res = await request(app).get("/api/sweets/owner");
+    expect(res.statusCode).toBe(401);
+  });
+
   test("GET /api/sweets/search should filter sweets by category", async () => {
     const res = await request(app).get("/api/sweets/search?category=Mithai");
     expect(res.statusCode).toBe(200);
     expect(res.body.length).toBeGreaterThan(0);
     expect(res.body[0].category).toBe("Mithai");
+  });
+
+  test("GET /api/sweets/search should filter by name", async () => {
+    const res = await request(app).get("/api/sweets/search?name=Kaju");
+    expect(res.statusCode).toBe(200);
+    expect(res.body.length).toBeGreaterThan(0);
+  });
+
+  test("GET /api/sweets/search should filter by price range", async () => {
+    const res = await request(app).get("/api/sweets/search?minPrice=100&maxPrice=600");
+    expect(res.statusCode).toBe(200);
+  });
+
+  test("GET /api/sweets/search should handle multiple filters", async () => {
+    const res = await request(app).get("/api/sweets/search?category=Mithai&minPrice=200&maxPrice=800");
+    expect(res.statusCode).toBe(200);
   });
 
   test("POST /api/sweets should add a sweet (owner only)", async () => {
@@ -77,6 +105,22 @@ describe("Sweets API", () => {
     expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty("sweet_id");
     sweetId = res.body.sweet_id;
+  });
+
+  test("POST /api/sweets should return error for non-owner users", async () => {
+    const res = await request(app)
+      .post("/api/sweets")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({
+        name: "Ras Malai",
+        category: "Mithai",
+        price: 500,
+        quantity: 20,
+        description: "Delicious ras malai sweet",
+        image_url: "https://dummyimage.com/rasmalai.jpg"
+      });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.message).toMatch(/Only owners/);
   });
 
   test("POST /api/sweets should return error if required fields missing", async () => {
@@ -123,6 +167,17 @@ describe("Sweets API", () => {
     expect(res.body.message).toMatch(/not found/);
   });
 
+  test("POST /api/sweets/:id/purchase should successfully purchase sweet", async () => {
+    const res = await request(app)
+      .post(`/api/sweets/${sweetId}/purchase`)
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({ quantity: 2 });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe("Purchase successful");
+    expect(res.body.total_price).toBe(1100);
+  });
+
   test("POST /api/sweets/:id/purchase should return error without token", async () => {
     const res = await request(app)
       .post(`/api/sweets/${sweetId}/purchase`)
@@ -147,6 +202,25 @@ describe("Sweets API", () => {
       .send({ quantity: 1 });
     expect(res.statusCode).toBe(404);
     expect(res.body.message).toMatch(/not found/);
+  });
+
+  test("POST /api/sweets/:id/restock should successfully restock sweet", async () => {
+    const res = await request(app)
+      .post(`/api/sweets/${sweetId}/restock`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ quantity: 5 });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe("Sweet restocked");
+    expect(res.body.added_quantity).toBe(5);
+  });
+
+  test("POST /api/sweets/:id/restock should return error for non-owner users", async () => {
+    const res = await request(app)
+      .post(`/api/sweets/${sweetId}/restock`)
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({ quantity: 10 });
+    expect(res.statusCode).toBe(403);
   });
 
   test("POST /api/sweets/:id/restock should return error without token", async () => {
@@ -181,6 +255,13 @@ describe("Sweets API", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe("Sweet deleted");
+  });
+
+  test("DELETE /api/sweets/:id should return error for non-owner users", async () => {
+    const res = await request(app)
+      .delete(`/api/sweets/${sweetId}`)
+      .set("Authorization", `Bearer ${userToken}`);
+    expect(res.statusCode).toBe(403);
   });
 
   test("DELETE /api/sweets/:id should return error if sweet not found", async () => {
